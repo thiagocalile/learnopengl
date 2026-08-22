@@ -5,3 +5,6 @@
 
 # Diretórios
 build
+
+# Estamos fazendo de maneira literária, então não vamos precisar de arquivos fonte do curso
+*.cpp

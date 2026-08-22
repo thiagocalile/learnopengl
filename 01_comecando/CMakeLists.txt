@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.23)
 
 project(LearnOpenGL)
 
-find_package(glfw3 REQUIRED)
-
 add_executable(exercise)
 target_sources(exercise
   PRIVATE
@@ -26,6 +24,5 @@ target_sources(GLAD
 
 target_link_libraries(exercise
   PRIVATE
-  GLAD
-  glfw
+    GLAD  
   )

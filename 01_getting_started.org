@@ -52,4 +52,44 @@
 
 * Criando uma janela
 
- 
+** GLFW
+
+ Bastante coisa varia por sistema operacional, então vamos ter que pedir ajuda de uma biblioteca. No caso, vão usar o GLFW e a (porcaria) do MSVS 2019.
+
+ Já temos para Nix a biblioteca, assim como para Ubuntu os binários. Também copiamos os ~includes~ para podermos desenvolver.
+
+ Eles sugerem usar o CMake, mas já que o tutorial não só é para Windows, como também usa a configuração gráfica, é literalmente inútil para a gente. Obrigado por absolutamente nada.
+
+ Eles fazem a palhaçada também de fazer apenas as coisas específicas do Visual Studio, como a merda da solução.
+
+ De maneira geral, eles sugerem usar o src_c{#include <GLFW/glfw3.h>} e as opções de compilação ~-glfw3 -lGL -lX11 lpthread -lXrandr -lXi -ldl~. Claro que estamos vivendo no passado com X11. Eu odeio tudo isso.
+
+** GLAD
+
+ Eles pedem para que seja o /binding/ para C++ e o GLAD1.
+
+ E já que o /setup/ é bem confuso pra Windows, mas mais simples para Linux, vamos seguir o tutorial recomendado aqui: [[https://medium.com/geekculture/a-beginners-guide-to-setup-opengl-in-linux-debian-2bfe02ccd1e][A Beginner’s Guide to Setup OpenGL in Linux (Debian)]]. Ele é meio que parecido para Ubuntu, mas já que, nesse exato momento, estou no NixOS, vou colocar um ~flake.nix~ aqui para nos ajudar.
+
+ Fiz algumas coisas aqui na pasta, como um CMakeLists, já que a gente tem que fazer na mão, assim como o flake.nix.
+
+ Eles não devem estar perfeitos, mas a gente vai ajustando de acordo com a necessidade.
+
+** Hello Window
+
+ Vamos fazer aqui um negócio para conseguir costurar tudo. Sim, vamos fazer isso de maneira literária.
+
+#+begin_src C++ :tangle ./main.cpp
+  #include <glad/glad.h>
+  #include <GLFW/glfw3.h>
+
+  int main ()
+  {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+    return 0;
+  }
+#+end_src
