@@ -1,0 +1,55 @@
+
+* Começando
+
+ Vamos aprender a usar as funções do 3.3, já que ele que começa a largar a mão do modo imediato (ou de função fixa). E que toda e qualquer versão mais moderna acaba usando as mesmas funções e mais algumas especializadas.
+
+ A versão mais nova (agora que estou escrevendo) é a 4.6.
+
+ Já que não me preocupei com instalar o pacote de HSLS, vamos ter blocos de código em C++ para o tutorial todo.
+
+#+begin_src C++
+  if(GL_ARB_extension_name)
+    {
+      // Código para a extensão
+    }
+   else
+     {
+       // Código sem a extensão
+     }
+#+end_src
+
+ A título de exemplo, você pode adicionar isso para os /shaders/, que usam ou não funções mais novas. Pense em diretrizes de compilação de um compilador.
+
+** A máquina de estados
+
+ O modelo de computação é de ficar alterando uma máquina de estados e tomar algumas ações nesse estado. Chamamos o estado de contexto.
+
+ Nós mutamos o estado ao estilo C:
+ 
+#+begin_src c++
+  // Criação do objeto
+  unsigned int objectId = 0;
+  glGenObject(1, &objectId);
+
+  // Atribuição do objeto ao contexto
+  glBindObject(GL_WINDOW_TARGET, objectId);
+
+  // Configuramos opções do objeto
+  glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_WIDTH, 800);
+  glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_HEIGHT, 600);
+
+  // Voltando o contexto ao padrão
+  glBindObject(GL_WINDOW_TARGET, 0);
+#+end_src
+
+ Percerba que a atribuição é por meio de funções (quasi construtores e /setters/getters/ de OOP). Importante também é como o objeto ganha um identificador numérico. Se eu lembro corretamente, é por causa que o identificador é melhor para tratar em um ambiente de computação heterogênea, ao invés de uma variável normal, pelo /layout/ de memória ser diferente entre os dois equipamentos. Pense em duas bibliotecas que precisam emprestar livros entre si, que se uma usar a posição de prateleira, não funciona, mas se usar o ISBN, é fácil de encontrar, mesmo estando em posições diferentes.
+
+ Um padrão de programação comum é esse do código:
+ 1) Criamos um identificador;
+ 2) Atribuimos um objeto ao identificador;
+ 3) Configuramos esse objeto;
+ 4) Liberamos o objeto ao jogar ele no identificador zero.
+
+* Criando uma janela
+
+ 
