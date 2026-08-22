@@ -78,9 +78,14 @@
 
  Vamos fazer aqui um negócio para conseguir costurar tudo. Sim, vamos fazer isso de maneira literária.
 
-#+begin_src C++ :tangle ./main.cpp
+ Ignore, por enquanto, os <<noweb>>
+
+#+begin_src C++ :tangle ./main.cpp :noweb yes
   #include <glad/glad.h>
   #include <GLFW/glfw3.h>
+  #include <iostream>
+
+  <<declaration_resize_callback>>
 
   int main ()
   {
@@ -88,10 +93,112 @@
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); <- Caso fosse MacOS
 
+    <<window_options>>
+
+    <<init_glad>>
+
+    <<gl_viewport>>
+
+    <<window_resize_callback_registration>>
+
+    <<close_loop>>
+
+    <<glfw_terminate>>
+    
     return 0;
+  }
+
+  <<definition_resize_callback>>
+
+#+end_src
+
+ Nessa parte, configuramos o GLFW (para não termos que fazer isso na mão) com cada uma das opções (e deve ser um enum) e o valor da opção.
+
+ Nesse caso, damos para ele a versão mais simples do OpenGL que falamos lá em cima, a 3.3.
+
+#+name: window_options
+#+begin_src C++ 
+  GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+
+  std::cout << "Creating window..." << std::endl; // Para termos um feedback
+
+  if (window == NULL)
+    {
+      std::cout << "Failed to create GLFW window" << std::endl;
+      glfwTerminate();
+      return -1;
+    }
+  glfwMakeContextCurrent(window);
+#+end_src
+
+ Com uma largura e altura, respectivamente, e o nome, criamos a janela. Já que ela ainda não tem uma lógica de aguardar, então ela surge por um micro segundo e some, por isso damos um aviso no console.
+
+ Precisamos inicializar o GLAD também, já que vamos usar ele para gerenciar ponteiros de funções.
+
+#+name: init_glad
+#+begin_src C++
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+    std::cout << "Failed to initialize GLAD" << std::endl;
+      return -1;
+    }
+#+end_src
+
+ Para gerenciar o tamanho da tela (virtual, o /view port/), temos esse código aqui:
+
+#+name: gl_viewport
+#+begin_src C++
+  glViewport(0, 0, 800, 600);
+#+end_src
+
+ É interessante que isso é o espaço que o OpenGL vai tomar da janela, então poderíamos dar para ele uma tela menor e fazer com que coisas apareçam na janela.
+
+ Também há uma questão de que o OpenGL nos dá um jeito de fazer referência meio estranha, com o 0,0 sendo o meio da tela, com -1 mais a esquerda, e/ou mais a cima.
+
+ Lembremos que é o sistema de coordenadas de tela.
+
+ E caso queiramos ter uma janela que responde com o usuário mexendo nas dimensões dela, usamos isso aqui:
+
+#+name: declaration_resize_callback
+#+begin_src C++
+  void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+#+end_src
+
+ com a immplementação ficando:
+
+#+name: definition_resize_callback
+#+begin_src C++
+  void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+  {
+    glViewport(0, 0, width, height);
   }
 #+end_src
 
- 
+ Agora, vai ser meio estranho, já que registramos o /callback/, mas não passamos argumentos para ele. Isso acontece pelo GLFW fazer isso pra gente:
+
+#+name: window_resize_callback_registration
+#+begin_src C++
+  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+#+end_src
+
+ Finalmente, vamos colocar um /loop/ para ver se deve ou não fechar a janela:
+
+#+name: close_loop
+#+begin_src C++
+  while(!glfwWindowShouldClose(window))
+    {
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+    }
+#+end_src
+
+ Preste atenção que usamos o modelo de /double buffering/. Lembre-se: o da frente é a superfície de exibição, o de trás é onde o programa escreve.
+
+ E, por fim, precisamos limpar a bagunça:
+
+#+name: glfw_terminate
+#+begin_src C++
+  glfwTerminate();
+#+end_src

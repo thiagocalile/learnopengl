@@ -4,12 +4,6 @@ project(LearnOpenGL)
 
 find_package(glfw3 REQUIRED)
 
-add_executable(exercise)
-target_sources(exercise
-  PRIVATE
-    main.cpp
-  )
-
 add_library(GLAD)
 target_sources(GLAD
   PRIVATE
@@ -24,8 +18,4 @@ target_sources(GLAD
       includes/glad/glad.h
 )
 
-target_link_libraries(exercise
-  PRIVATE
-  GLAD
-  glfw
-  )
+add_subdirectory(01_comecando)

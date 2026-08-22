@@ -1,28 +1,12 @@
-cmake_minimum_required(VERSION 3.23)
+add_executable(01_comecando)
 
-project(LearnOpenGL)
-
-add_executable(exercise)
-target_sources(exercise
-  PRIVATE
-    main.cpp
-  )
-
-add_library(GLAD)
-target_sources(GLAD
-  PRIVATE
-    glad.c
-
-  PUBLIC
-    FILE_SET glad_headers
-    TYPE HEADERS
-    BASE_DIRS
-      includes
-    FILES
-      includes/glad/glad.h
+target_sources(01_comecando
+PRIVATE
+  main.cpp
 )
 
-target_link_libraries(exercise
+target_link_libraries(01_comecando
   PRIVATE
-    GLAD  
-  )
+    GLAD
+    glfw
+)
