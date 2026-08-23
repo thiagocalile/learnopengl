@@ -74,13 +74,13 @@
 
  Eles não devem estar perfeitos, mas a gente vai ajustando de acordo com a necessidade.
 
-** Hello Window
+* Hello Window
 
  Vamos fazer aqui um negócio para conseguir costurar tudo. Sim, vamos fazer isso de maneira literária.
 
  Ignore, por enquanto, os <<noweb>>
 
-#+begin_src C++ :tangle ./main.cpp :noweb yes
+#+begin_src C++ :tangle ./hello_window.cpp :noweb yes
   #include <glad/glad.h>
   #include <GLFW/glfw3.h>
   #include <iostream>
@@ -260,3 +260,7 @@
   glClearColor(r, g, b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 #+end_src
+
+Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que seja, ela pisca!
+
+* 

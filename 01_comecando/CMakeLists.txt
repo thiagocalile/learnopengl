@@ -1,12 +1,23 @@
-add_executable(01_comecando)
-
-target_sources(01_comecando
-PRIVATE
-  main.cpp
+set(
+  TARGETS
+  hello_window
+  hello_triangle
 )
 
-target_link_libraries(01_comecando
-  PRIVATE
-    GLAD
-    glfw
-)
+foreach(TARGET IN TARGETS)
+
+  add_executable(TARGET)
+
+  target_sources(${TARGET}
+    PRIVATE
+      ${TARGET}.cpp
+    )
+
+
+  target_link_libraries(${TARGET}
+    PRIVATE
+      GLAD
+      glfw
+    )
+    
+endforeach()
