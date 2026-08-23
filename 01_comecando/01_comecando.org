@@ -344,4 +344,133 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
   }
 #+end_src
 
- Temos ali a versão, 
+ Temos ali a versão, a declaração dos atributos (a explicar mais), com o ~main()~, que é o programa que dá a posição para cada vértice.
+
+ No caso, a ~gl_Position~ toma um ~vec4~ por causa da /perspective division/, que é a última dimensão e vamos falar dela mais pra frente.
+
+ Esse é o /shader/ mais simples possível por não mudar a geometria em absolutamente nada. Em geral, o mínimo que fazemos é a normalização das coordenadas.
+
+ Vamos testar uma sapecagem aqui por causa do Emacs:
+
+#+name: vertex_shader_source
+#+begin_src C++ :noweb yes
+  const char *vertexShaderSource = "<<vertex_shader>>";
+#+end_src
+
+ E então, precisamos criar o nosso /vertex shader object/:
+
+#+name: vertex_shader_object
+#+begin_src C++
+  unsigned int vertexShader;
+
+  vertexShader = glCreateShader(GL_VERTEX_SHADER);
+#+end_src
+
+ E mandar para o /driver/ compiler:
+
+#+name: vertex_shader_compile
+#+begin_src C++
+  glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+  glCompileShader(vertexShader);
+#+end_src
+
+ E, para fins práticos, um trecho de código para ver se está tudo bem:
+
+#+name: veretx_shader_error_handling
+#+begin_src C++
+  int success;
+  char infoLog[512];
+  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+  if(!success){
+    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+    std::out << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+   }
+#+end_src
+
+ Então, resumindo o que aconteceu aqui:
+ 1) Definimos o /shader/, o programa de fato;
+ 2) Vamos declarar ele como um /string/;
+ 3) Pedimos para o /driver/ criar e dar um identificados para ele;
+ 4) Conectamos o código do /shader/ com o identificador;
+ 5) Pedimos para compilar o /shader/ pelo identificador;
+ 6) Caso hajam erros, mande para a ~stdout~, se não, a vida que segue.
+
+ Esse é meio que o padrão comum para todos os /shaders/. Meio chato, mas eis o estado de computação heterogênea.
+
+** O /fragment shader/
+
+ A última parte que precisamos acrescentar. Geralmente aqui é que bastante coisa acontece, já que é quando damos cor ou textura para as coisas, então é onde temos /feedback/ bem bom.
+
+#+name: fragment_shader
+#+begin_src glsl
+  #version 330 core
+  out vec4 FragColor;
+
+  void main()
+  {
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+  }
+#+end_src
+
+ Definimos ali um tipo de dado de saída e, pela sua simplicidade, ele só dá um valro fixo para a cor.
+
+ Vamos fazer as mesmas coisas do /vertex/ para aqui:
+
+#+name: fragment_shader_compile
+#+begin_src C++
+  unsigned int fragmentShader;
+  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+  glCompileShader(fragmentShader);
+#+end_src
+
+ E, para fins de teste, vamos combinar também a mesma questão de erros:
+
+#+name: fragment_shader_error_handling
+#+begin_src C++
+  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+  if(!success)
+   {
+    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+    std::out << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+   }
+#+end_src
+
+** O /shader program/
+
+ Precisamos juntar (ligar, ou até /linkar/, alguns diriam) os programas em uma coisa só, que é ativada a cada chamada de desenho.
+
+ É legal que ele te avisa se der problema, geralmente relacionado à saída de um programa não bater com a entrada do outro.
+
+#+name: shader_linking
+#+begin_src C++
+  unsigned int shaderProgram;
+  shaderProgram = glCreateProgram();
+
+  glAttachShader(shaderProgram, vertexShader);
+  glAttachShader(shaderProgram, fragmentShader);
+  glLinkProgram(shaderProgram);
+#+end_src
+
+ Por fim, vamos verificar erros no programa também:
+
+#+name: program_shader_error_handling
+#+begin_src C++
+  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    std::out << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+   }
+#+end_src
+
+ Por fim, vamos pedir para o /driver/ fazer a GPU usar o nosso programa e, então, limpar o que não precisamos (já que foi ligado e mandamos para a GPU):
+
+#+name: program_shader_use
+#+begin_src C++
+  glUseProgram(shaderProgram);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+#+end_src
