@@ -263,4 +263,85 @@
 
 Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que seja, ela pisca!
 
-* 
+* Hello Triangle
+
+ Uma parte razoável do problema dos gráficos é transforma 3D em 2D. Muitos dos trabalhos são paralelizáveis e são paralelizados. A GPU processa cada uma das etapas com programinhas, chamados de /shaders/. Para nós, a linguagem é a /OpenGL Shading Language/, ou /GLSL/.
+
+ Cada tipo de /shader/ afeta uma parte diferente da /pipeline/:
+
+ 1) Começamos com dados de vértices;
+ 2) Podemos aplicar /shaders/ de vértices;
+ 3) Podemos aplicar /shaders/ de geometria;
+ 4) A forma é montada, com a geometria;
+ 5) A forma é rasterizada;
+ 6) Podemos aplicar /shaders/ de fragmentos, provenientes da rasterização;
+ 7) São feitos testes e misturas (/blending/).
+
+ Só não conseguimos interferir com os passos 4, 5 e 7. Pelo menos, no OpenGL.
+
+ Toda vez que chamamos as funções de desenho, podemmmos pedir para o OpenGL desenhar alguns primitivos, como src_c{GL_POINTS}, src_c{GL_TRIANGLES} e src_c{GL_LINE_STRIP}.
+
+ Para cada etapa, somando um ao índice:
+ 1) Entram vértices individuais e saem vértices individuais, transformando as coordenadas e outros atributos;
+ 2) Opcional, mas quando tem, gera mais (ou remove) vértices para formar primitivos de vários jeitos. No caso de exemplo, gerar triângulos dada uma forma;
+ 3) Montam primitivos a partir dos vértices;
+ 4) Dos primitivos, acontece o /clipping/ para reduzir a quantidade de fragmentos que não seriam renderizados, e então, geramos fragmentos segundo o tamanho da tela;
+ 5) Calculamos, em geral, a cor do fragmento. Isso pode levar em conta iluminação, texturas, sombras e mais um monte de coisa;
+ 6) Por fim, acontece o /alpha testing/ e /blending/, que dá transparência, assim como alguns fragmentos podem ser descartados segundo estarem na frente ou atrás de um objeto.
+
+ O OpenGL define isso tudo, exceto um /shader/ de vértice e de fragmento. Isso somos nós que decidimos.
+
+ Não só isso, mas o programa só vai mostrar coisas que estiverem nas coordenadas normalizadas do dispositivo, as entre -1.0 e 1.0 nos três eixos (pensando no espaço tridimensional).
+ 
+** O início do triângulo
+
+ Então, já que queremos apenas um singelo triângulo, façamos seus vértices:
+
+#+name: triangulo
+#+begin_src C++
+  float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.0f,  0.5f, 0.0f
+  };
+#+end_src
+
+ Essas coordenadas são as de mundo, e para transformar, depois, para nossa tela, vamos usar a transformada de câmera (ou /viewport transform/).
+
+ Bem, agora que temos o nosso triângulo, uma coisa de cada vez.
+
+ Vamos ter que mandar esse cara para a placa de vídeo, já que é ela que vai ter que ler esses dados, interpretar segundo o /shader/ e continuar com a /pipeline/ daí.
+
+ Como toda boa linguagem, vamos ter que gerenciar a memória na mão. Para essa primeira parte, temos o /vertex buffer object/ ou VBO, que guarda vértices.
+
+ Criamos /buffers/ assim:
+
+#+name: vbo
+#+begin_src C++
+  unsigned int VBO;
+  glGenBuffers(1, &VBO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+#+end_src
+
+ Aqui, ele gera o /buffer/, atribui a referência ao tipo GL_ARRAY_BUFFER e damso um tamanho para ele.
+
+ Damos o tipo de dados para ele ali por escrevermos uma vez e ele ser usado várias vezes.
+
+** O /vertex shader/
+
+#+name: vertex_shader
+#+begin_src glsl
+  #version 330 core
+
+  layout (location = 0) in vec3 aPos;
+
+  void main()
+  {
+    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+  }
+#+end_src
+
+ Temos ali a versão, 
