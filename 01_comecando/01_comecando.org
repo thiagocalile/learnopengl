@@ -84,8 +84,10 @@
   #include <glad/glad.h>
   #include <GLFW/glfw3.h>
   #include <iostream>
+  <<includes_plus>>
 
   <<declaration_resize_callback>>
+  <<escape_window_declaration>>
 
   int main ()
   {
@@ -186,9 +188,13 @@
  Finalmente, vamos colocar um /loop/ para ver se deve ou não fechar a janela:
 
 #+name: close_loop
-#+begin_src C++
+#+begin_src C++ :noweb yes
   while(!glfwWindowShouldClose(window))
     {
+      <<escape_window_call>>
+
+      <<cleaning_color_plus>>
+        
       glfwSwapBuffers(window);
       glfwPollEvents();
     }
@@ -201,4 +207,56 @@
 #+name: glfw_terminate
 #+begin_src C++
   glfwTerminate();
+#+end_src
+
+ Queremos colocar um pouco de resposta a entradas no nosso programa, como, ao apertar ESC, fechar o programa:
+
+#+name: escape_window_declaration
+#+begin_src C++
+  void processInput(GLFWwindow *window)
+  {
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window, true);
+  }
+#+end_src
+
+#+name: escape_window_call
+#+begin_src C++
+  processInput(window);
+#+end_src
+
+ Aqui, eles falam que "o /render loop/ também é chamado de frame", mas eu nunca vi alguém além deles chamarem isso assim. Que seja, não seria a primeira vez deles fazendo besteira.
+
+ Mas uma coisa que é legal é esse negócio aqui, que dá uma cor para a tela, mostrando que ela está se limpando:
+
+#+name: cleaning_color
+#+begin_src C++
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+#+end_src
+
+ E eles chamam a primeira função de /state setting/, com a segunda sendo /state using/. O que é bem maneiro, ter a distinção e o vocabulário.
+
+ E por termos acabado, vamos fazer uma bagunça: e se as cores de limpeza mudarem com o tempo?
+
+#+name: includes_plus
+#+begin_src C++
+  #include <cmath>
+  #include <chrono>
+
+  // e vamos fazer uma sujeirinha aqui:
+
+  auto beginning_app = std::chrono::high_resolution_clock::now();
+#+end_src
+
+ E, então, vamos usar cosseno e tempo para brincar:
+
+#+name: cleaning_color_plus
+#+begin_src C++
+  auto r = std::cosf(std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - beginning_app).count()) + 1.0f;
+  auto g = std::cosf(std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - beginning_app).count()) + 1.0f;
+  auto b = std::cosf(std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - beginning_app).count()) + 1.0f;
+
+  glClearColor(r, g, b, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
 #+end_src
