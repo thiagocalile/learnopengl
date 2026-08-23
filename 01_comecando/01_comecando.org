@@ -193,7 +193,7 @@
     {
       <<escape_window_call>>
 
-      <<cleaning_color_plus>>
+      <<cleaning_color>>
         
       glfwSwapBuffers(window);
       glfwPollEvents();
@@ -354,7 +354,9 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
 
 #+name: vertex_shader_source
 #+begin_src C++ :noweb yes
-  const char *vertexShaderSource = "<<vertex_shader>>";
+  const char *vertexShaderSource = R"(
+  <<vertex_shader>>
+  )";
 #+end_src
 
  E então, precisamos criar o nosso /vertex shader object/:
@@ -376,7 +378,7 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
 
  E, para fins práticos, um trecho de código para ver se está tudo bem:
 
-#+name: veretx_shader_error_handling
+#+name: vertex_shader_error_handling
 #+begin_src C++
   int success;
   char infoLog[512];
@@ -384,7 +386,7 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
 
   if(!success){
     glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    std::out << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
    }
 #+end_src
 
@@ -418,7 +420,10 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
  Vamos fazer as mesmas coisas do /vertex/ para aqui:
 
 #+name: fragment_shader_compile
-#+begin_src C++
+#+begin_src C++ :noweb yes
+  const char* fragmentShaderSource = R"(
+  <<fragment_shader>>
+  )";
   unsigned int fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
@@ -434,7 +439,7 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
   if(!success)
    {
     glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    std::out << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
    }
 #+end_src
 
@@ -461,7 +466,7 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
   if(!success) {
     glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    std::out << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
    }
 #+end_src
 
@@ -473,4 +478,133 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
 
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
+#+end_src
+
+ Agora, o que falta é explicar como os vértices estão na memória da GPU e como eles entram no nosso /shader program/.
+
+** Ligando atributos dos vértices
+
+ Digamos que temos algo assim:
+
+ | vÉRTICE 1 | VÉRTICE 2 | VERTICE 3 |
+ | X | Y | Z | X | Y | Z | X | Y | Z |
+ 0   4   8  12  16  20  24  28  32  36
+ |--Stride-->|
+ |<-- Offset = 0
+
+ Isso significa, pra gente, que cada vértice ocupa 12 bytes, o nosso /stride/ (ou passo), com cada coordenada ocupando quatro bytes. E dizemos que a memória começa no zero do /buffer/. Outra coisa que sabemos disso é que não há espaço enter os vértices (ela é densa).
+
+ Com isso, falamos aqui para o /driver/ como interpretar os dados:
+
+#+name: vertex_buffer_interpret
+#+begin_src C++
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+#+end_src
+
+ Em ordem dos parâmetros:
+ - 0 por que configuramos [[vertex_shader][vertex_shader]] com o ~location = 0~;
+ - 3 por ser um ~vec3~;
+ - GL_FLOAT por serem ~floats~
+ - GL_FALSE por não precisarmos normalizar os dados (se int ou byte, seria ~true~);
+ - O tamanho do /stide/ em /bytes/;
+ - O ~cast~ esquisito por termos colocado o dado no início do /buffer/.
+
+ O problema de usar só um VBO é que, toda vez que queremos usar esses vértices e esse programa, temos que dar /rebind/ toda chamada. Então, teremos uma estrutura que faz isso melhor:
+
+** O /vertex array object/
+
+ Chamado também de /VAO/, é usado para que os programas usem os dados.
+
+ Isso acaba sendo, no fim das contas, direcionado a performance. Fazemos a expedição dos dados, fazemos a compilação e expedição do programa e, por fim, ligamos os dois usando os ponteiros. Essa tabela de ponteiros é o /VAO/.
+
+#+name: vertex_array_object
+#+begin_src C++
+  unsigned int VAO;
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
+#+end_src
+
+ Esse código fica em cima do [[vbo][vbo]], com o [[vertex_buffer_interpret][vertex_buffer_interpret]] abaixo.
+
+ E precisamos, então, modificar o /loop/ de renderização:
+
+#+name: vao_use
+#+begin_src C++
+  glUseProgram(shaderProgram);
+  glBindVertexArray(VAO);
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+#+end_src
+
+** O tão aguardado triângulo
+
+ Vamos ter que juntar todo o código, então vamos copiar um pouco a parte de cima:
+
+ #+begin_src C++ :tangle ./hello_triangle.cpp :noweb yes
+   #include <glad/glad.h>
+   #include <GLFW/glfw3.h>
+   #include <iostream>
+   <<includes_plus>>
+
+   <<declaration_resize_callback>>
+   <<escape_window_declaration>>
+
+   <<triangulo>>
+
+   int main ()
+   {
+     glfwInit();
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+     // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); <- Caso fosse MacOS
+
+     <<window_options>>
+
+     <<init_glad>>
+
+     <<gl_viewport>>
+
+     <<window_resize_callback_registration>>
+
+     <<vertex_array_object>>
+        
+     <<vbo>>
+     <<vertex_shader_source>>
+     <<vertex_shader_object>>
+     <<vertex_shader_compile>>
+     <<vertex_shader_error_handling>>
+
+     <<fragment_shader_compile>>
+     <<fragment_shader_error_handling>>
+
+     <<shader_linking>>
+     <<program_shader_error_handling>>
+     <<program_shader_use>>
+     <<vertex_buffer_interpret>>
+
+     <<triangle_loop>>
+
+     <<glfw_terminate>>
+     
+     return 0;
+   }
+
+   <<definition_resize_callback>>
+
+#+end_src
+
+#+name: triangle_loop
+#+begin_src C++ :noweb yes
+  while(!glfwWindowShouldClose(window))
+    {
+      <<escape_window_call>>
+
+      <<cleaning_color>>
+
+      <<vao_use>>
+        
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+    }
 #+end_src

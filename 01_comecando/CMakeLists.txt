@@ -4,9 +4,9 @@ set(
   hello_triangle
 )
 
-foreach(TARGET IN TARGETS)
+foreach(TARGET IN LISTS TARGETS)
 
-  add_executable(TARGET)
+  add_executable(${TARGET})
 
   target_sources(${TARGET}
     PRIVATE
