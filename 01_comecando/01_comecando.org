@@ -608,3 +608,65 @@ Bem, eu acho que por termos perda de precisão, não varia tanto assim, mas que 
       glfwPollEvents();
     }
 #+end_src
+
+** /Shaders/
+
+ Vamos nos aprofundar na GLSL?
+
+ Cada /shader/ é um programa isolado, salvo pela passagem de entradas e saídas entre si.
+
+ O ponto de entrada de cada /shader/ é a ~main()~, já que estamos falando de algo que foi herdado do C.
+
+ Há algumas facilidades para tratar de vetores e matrizes, que é algo importante para gráficos.
+
+ Um exemplo da forma geral de um /shader/:
+ 
+#+begin_src glsl
+  #version version_number
+  in type in_variable_name;
+  in type in_variable_name;
+
+  out type out_variable_name;
+
+  uniform type uniform_name;
+
+  void main()
+  {
+    // processamento
+    // ...
+    // finaliza processamento
+    // e prepara para saída
+    out_variable_name = weird_stuff_we_processed;
+  }
+#+end_src
+
+ Temos umas três coisinhas meio estranhas nesse /shader/, se comparado a um programa de C++:
+ - O ~#version~, que é algo que já vimos antes;
+ - ~in~, as importações de dados;
+ - ~out~, como vamos chamar a exportação;
+ - ~uniform~,
+
+ Se estamos tratando de um /vertex shader/, cada entrada é um atributo de vértice. Há um número limitado de atributos de vértice que podemos ter, limitado pelo /hardware/. Entretanto, há a garantia de que temos sempre 16 atributos de vértice, com 4 componentes cada.
+
+ Podemos descobrir o limite ao usarmos essa função assim no programa principal:
+
+#+begin_src C++
+  int nrAttributes;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttibutes);
+  std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
+#+end_src
+
+ Podemos ficar cutucando quais valores estão selecionados, habilitados ou possíveis para nossa máquina de estados com isso. Caso queira mais informações: [[https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGet.xhtml][glGet<family>]].
+
+ Para a tipagem, temos os vetores em famílias:
+ - ~vecn~ para ~floats~;
+ - ~b~ para ~bools~;
+ - ~i~ para ~ints~;
+ - ~u~ para ~unsigned ints~;
+ - ~d~ para ~doubles~;
+
+ O ~n~ pode ir de 2 a 4, com os valores sendo x, y, z e w. Podemos usar ~rgba~ para os componentes de cores e ~stpq~ para texturas.
+
+ Podemos fazer /swizzling/: src_glsl{vec4 foo = bar.xxyz + baz.yzyx}. Ou, ainda, src_glsl{vec4 foo = vec4(bar.xyz, 1.0f);}
+
+ 
